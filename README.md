@@ -28,20 +28,25 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 * Introduction to descriptive statistics  
 * Main native plots in R
 
-### Class References
-
-[The R Graph Gallery (Site para ver modelos de possíveis gráficos no R)](https://r-graph-gallery.com/index.html)
+### [RECOMMENDED] CORE READINGS
 
 [Wickham H (2014). Dados organizados. Journal of Statistical Software. Volume 59, Edição 10.](https://vita.had.co.nz/papers/tidy-data.pdf)
 
 [Hadley Wickham (2010): Uma gramática em camadas de gráficos, Journal of Computational and Graphical Statistics](https://byrneslab.net/classes/biol607/readings/wickham_layered-grammar.pdf)
 
+### SUPPLEMENTARY  READINGS
+
 ## ORIGINAL DATA SOURSE
+
+[BRASIL. Tribunal Superior Eleitoral. Portal de Dados Abertos do TSE: resultados. Brasília, DF, [2026]. Disponível em: https://dadosabertos.tse.jus.br/. Acesso em: 24 set. 2026.](https://dadosabertos.tse.jus.br/dataset/?groups=resultados&_tags_limit=0)
 
 ### DOCUMENTATION
 
-
 ## EXPLORATORY DATA ANALYSIS
+
+## APPENDIX
+
+[The R Graph Gallery (Site para ver modelos de possíveis gráficos no R)](https://r-graph-gallery.com/index.html)
 
 
 
