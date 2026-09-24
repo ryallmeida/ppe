@@ -20,10 +20,13 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 
 ## POINTS AND SUBJECTS
 
-* Motivation to learn Data Visualization
+* Motivation to learn data visualization
 * Some real applications
-* Summary and DEA   
-* Main native plots in R
+* Introducing the database structure
+* Why use these packages?
+* Understanding spatial data
+* Coordinate reference systems and projections
+* Creating and customizing maps
 
 ### [RECOMMENDED] CORE READINGS
 
@@ -56,7 +59,7 @@ As análises foram realizadas no R, utilizando o pacote *{tidyverse}* para manip
 
 [BRASIL. Tribunal Superior Eleitoral. Portal de Dados Abertos do TSE: resultados. Brasília, DF, [2026]. Disponível em: https://dadosabertos.tse.jus.br/. Acesso em: 24 set. 2026.](https://dadosabertos.tse.jus.br/dataset/?groups=resultados&_tags_limit=0)
 
-### DOCUMENTATION BASE
+### DOCUMENTATION 
 
 * **Source:** Brazilian Superior Electoral Court (TSE)
 * **Unit of observation:** one row per candidate, per electoral zone, per municipality, per election.
