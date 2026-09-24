@@ -60,11 +60,11 @@ As análises foram realizadas no R, utilizando o pacote *{tidyverse}* para manip
 
 ## Data dictionary
 
-**Source:** Brazilian Superior Electoral Court (TSE), Electoral Data Repository — `VOTACAO_CANDIDATO_MUNZONA_<YEAR>_<UF>` files.
-**Unit of observation:** one row per candidate, per electoral zone, per municipality, per election.
-**Subset:** first round only; unsuccessful candidates only (`NÃO ELEITO`); 2020, 2022 and 2024 elections.
-**Missing values:** `-1` = blank in the TSE database; `-3` = not applicable to that election year. Text fields may appear as `NA` or an empty string.
-**Encoding:** original files in Latin-1, converted to UTF-8 with no data loss.
+* **Source:** Brazilian Superior Electoral Court (TSE), Electoral Data Repository — `VOTACAO_CANDIDATO_MUNZONA_<YEAR>_<UF>` files.
+* **Unit of observation:** one row per candidate, per electoral zone, per municipality, per election.
+* **Subset:** first round only; unsuccessful candidates only (`NÃO ELEITO`); 2020, 2022 and 2024 elections.
+* **Missing values:** `-1` = blank in the TSE database; `-3` = not applicable to that election year. Text fields may appear as `NA` or an empty string.
+* **Encoding:** original files in Latin-1, converted to UTF-8 with no data loss.
 
 | Variable | Type | Description | Values / Notes |
 |---|---|---|---|
