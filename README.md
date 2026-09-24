@@ -90,8 +90,6 @@ As análises foram realizadas no R, utilizando o pacote *{tidyverse}* para manip
 | `QT_VOTOS_NOMINAIS_VALIDOS` | integer | Valid votes for the candidate | **Excludes** annulled votes. Differs from `QT_VOTOS_NOMINAIS` in 248 rows (3,712 votes) |
 | `DS_SIT_TOT_TURNO` | text | Candidate's outcome in the round | `NÃO ELEITO` (not elected) only in this subset |
 
-## EXPLORATORY DATA ANALYSIS
-
 ## REFERENCES
 
 GARNIER, Simon *et al*. **viridis(Lite)**: colorblind-friendly color maps for R. Versão 0.6.5. [*S. l.*]: CRAN, 2024. Pacote R. DOI: [10.5281/zenodo.4679423](https://doi.org/10.5281/zenodo.4679423). Disponível em: [https://sjmgarnier.github.io/viridis/](https://sjmgarnier.github.io/viridis/). Acesso em: 24 set. 2026.
