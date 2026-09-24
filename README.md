@@ -36,6 +36,30 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 
 ### SUPPLEMENTARY  READINGS
 
+## PACKAGES 
+
+```R
+if (!require(pacman)) install.packages("pacman")
+
+pacman::p_load(tidyverse, 
+               geobr, 
+               sf, 
+               patchwork)
+```
+
+
+GARNIER, Simon *et al*. **viridis(Lite)**: colorblind-friendly color maps for R. Versão 0.6.5. [*S. l.*]: CRAN, 2024. Pacote R. DOI: [10.5281/zenodo.4679423](https://doi.org/10.5281/zenodo.4679423). Disponível em: [https://sjmgarnier.github.io/viridis/](https://sjmgarnier.github.io/viridis/). Acesso em: 24 set. 2026.
+
+PEBESMA, Edzer. Simple features for R: standardized support for spatial vector data. **The R Journal**, [*s. l.*], v. 10, n. 1, p. 439-446, 2018. DOI: [10.32614/RJ-2018-009](https://doi.org/10.32614/RJ-2018-009).
+
+PEBESMA, Edzer; BIVAND, Roger. **Spatial data science**: with applications in R. Boca Raton: Chapman and Hall/CRC, 2023. DOI: [10.1201/9780429459016](https://doi.org/10.1201/9780429459016).
+
+PEDERSEN, Thomas Lin. **patchwork**: the composer of plots. Versão 1.3.2. [*S. l.*]: CRAN, 2025. Pacote R. DOI: [10.32614/CRAN.package.patchwork](https://doi.org/10.32614/CRAN.package.patchwork). Disponível em: [https://CRAN.R-project.org/package=patchwork](https://CRAN.R-project.org/package=patchwork). Acesso em: 24 set. 2026.
+
+PEREIRA, Rafael H. M.; GONCALVES, Caio Nogueira. **geobr**: download official spatial data sets of Brazil. Versão 1.9.1. [*S. l.*]: CRAN, 2024. Pacote R. DOI: [10.32614/CRAN.package.geobr](https://doi.org/10.32614/CRAN.package.geobr). Disponível em: [https://CRAN.R-project.org/package=geobr](https://CRAN.R-project.org/package=geobr). Acesso em: 24 set. 2026.
+
+WICKHAM, Hadley *et al*. Welcome to the tidyverse. **Journal of Open Source Software**, [*s. l.*], v. 4, n. 43, p. 1686, 2019. DOI: [10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
+
 ## ORIGINAL DATA SOURSE
 
 [BRASIL. Tribunal Superior Eleitoral. Portal de Dados Abertos do TSE: resultados. Brasília, DF, [2026]. Disponível em: https://dadosabertos.tse.jus.br/. Acesso em: 24 set. 2026.](https://dadosabertos.tse.jus.br/dataset/?groups=resultados&_tags_limit=0)
