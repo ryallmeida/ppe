@@ -1,5 +1,6 @@
 
-#Introduction to Computational Methods for the Visualization and Analysis of Parties and Elections   [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/ryallmeida/ppe?tab=MIT-1-ov-file)
+# Introduction to Computational Methods for the Visualization and Analysis of Parties and Elections [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/ryallmeida/ppe?tab=MIT-1-ov-file)
+
 This repository contains the codes and materials used in this workshop, delivered as part of the Political Parties and Elections course in the Bachelor’s Degree in Political Science at the Federal University of Pernambuco (UFPE, Brazil), under the supervision of Leon Victor Queiroz (PhD).
 
 
