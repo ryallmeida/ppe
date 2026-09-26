@@ -108,7 +108,7 @@ WICKHAM, Hadley *et al*. Welcome to the tidyverse. **Journal of Open Source Soft
 
 [The R Graph Gallery (Site para ver modelos de possíveis gráficos no R)](https://r-graph-gallery.com/index.html)
 
-Confira especificações estéticas do 'ggplot2' em https://ggplot2.tidyverse.org/articles/ggplot2-specs.html e as principais funções e argumentos desse pacote em https://ggplot2.tidyverse.org/reference/
+*Cf.* especificações estéticas do 'ggplot2' em https://ggplot2.tidyverse.org/articles/ggplot2-specs.html e as principais funções e argumentos desse pacote em https://ggplot2.tidyverse.org/reference/
 
-
+*Cf.* Galeria de expansões válidas registradas compatíveis com o pacote em https://exts.ggplot2.tidyverse.org/gallery/
 
