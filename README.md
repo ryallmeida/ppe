@@ -96,7 +96,7 @@ GARNIER, Simon *et al*. **viridis(Lite)**: colorblind-friendly color maps for R.
 
 PEBESMA, Edzer. Simple features for R: standardized support for spatial vector data. **The R Journal**, [*s. l.*], v. 10, n. 1, p. 439-446, 2018. DOI: [10.32614/RJ-2018-009](https://doi.org/10.32614/RJ-2018-009).
 
-PEBESMA, Edzer; BIVAND, Roger. **Spatial data science**: with applications in R. Boca Raton: Chapman and Hall/CRC, 2023. DOI: [10.1201/9780429459016](https://doi.org/10.1201/9780429459016).
+[PEBESMA, Edzer; BIVAND, Roger. **Spatial data science**: with applications in R. Boca Raton: Chapman and Hall/CRC, 2023.](https://r-spatial.org/book/) DOI: [10.1201/9780429459016](https://doi.org/10.1201/9780429459016).
 
 PEDERSEN, Thomas Lin. **patchwork**: the composer of plots. Versão 1.3.2. [*S. l.*]: CRAN, 2025. Pacote R. DOI: [10.32614/CRAN.package.patchwork](https://doi.org/10.32614/CRAN.package.patchwork). Disponível em: [https://CRAN.R-project.org/package=patchwork](https://CRAN.R-project.org/package=patchwork). Acesso em: 24 set. 2026.
 
@@ -107,6 +107,8 @@ WICKHAM, Hadley *et al*. Welcome to the tidyverse. **Journal of Open Source Soft
 ## APPENDIX
 
 [The R Graph Gallery (Site para ver modelos de possíveis gráficos no R)](https://r-graph-gallery.com/index.html)
+
+Confira especificações estéticas do 'ggplot2' em https://ggplot2.tidyverse.org/articles/ggplot2-specs.html e as principais funções e argumentos desse pacote em https://ggplot2.tidyverse.org/reference/
 
 
 
