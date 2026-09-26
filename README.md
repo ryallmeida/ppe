@@ -1,7 +1,7 @@
 
 # Introduction to Computational Methods for the Geospatial Visualization of Political Parties and Elections [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/ryallmeida/ppe?tab=MIT-1-ov-file)
 
-This repository contains the codes and materials used in this workshop, delivered as part of the Political Parties and Elections course in the Bachelor’s Degree in Political Science at the Federal University of Pernambuco (UFPE, Brazil), under the supervision of Leon Victor Queiroz (PhD).
+This repository contains the codes and materials used in this workshop, delivered as part of the Political Parties and Elections course in the Bachelor’s Degree in Political Science at the Federal University of Pernambuco (UFPE, Brazil), under the supervision of [Leon Victor Queiroz (PhD)](http://lattes.cnpq.br/4629969138485769).
 
 
 # **SYLLABUS** ![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white) 
@@ -30,7 +30,7 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 
 ### [RECOMMENDED] CORE READINGS
 
-WICKHAM, Hadley. **ggplot2**: elegant graphics for data analysis. New York: Springer, 2009. (Use R!). ISBN 978-0-387-98140-6. DOI: [10.1007/978-0-387-98141-3](https://doi.org/10.1007/978-0-387-98141-3).
+[WICKHAM, Hadley. **ggplot2**: elegant graphics for data analysis. New York: Springer, 2009. (Use R!). ISBN 978-0-387-98140-6.](https://ggplot2-book.org/) DOI: [10.1007/978-0-387-98141-3](https://doi.org/10.1007/978-0-387-98141-3).
 
 [Hadley Wickham (2010): Uma gramática em camadas de gráficos, Journal of Computational and Graphical Statistics](https://byrneslab.net/classes/biol607/readings/wickham_layered-grammar.pdf)
 
