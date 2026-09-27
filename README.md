@@ -95,6 +95,8 @@ As análises foram realizadas no R, utilizando o pacote *{tidyverse}* para manip
 
 GARNIER, Simon *et al*. **viridis(Lite)**: colorblind-friendly color maps for R. Versão 0.6.5. [*S. l.*]: CRAN, 2024. Pacote R. DOI: [10.5281/zenodo.4679423](https://doi.org/10.5281/zenodo.4679423). Disponível em: [https://sjmgarnier.github.io/viridis/](https://sjmgarnier.github.io/viridis/). Acesso em: 24 set. 2026.
 
+INSTITUTO BRASILEIRO DE GEOGRAFIA E ESTATÍSTICA. Divisão regional do Brasil em regiões geográficas imediatas e regiões geográficas intermediárias: 2017. Rio de Janeiro: IBGE, 2017. 82 p. Disponível em: [https://biblioteca.ibge.gov.br/index.php/biblioteca-catalogo?view=detalhes&id=2100600](https://biblioteca.ibge.gov.br/index.php/biblioteca-catalogo?view=detalhes&id=2100600). Acesso em 27 de set. 2026
+
 PEBESMA, Edzer. Simple features for R: standardized support for spatial vector data. **The R Journal**, [*s. l.*], v. 10, n. 1, p. 439-446, 2018. DOI: [10.32614/RJ-2018-009](https://doi.org/10.32614/RJ-2018-009).
 
 [PEBESMA, Edzer; BIVAND, Roger. **Spatial data science**: with applications in R. Boca Raton: Chapman and Hall/CRC, 2023.](https://r-spatial.org/book/) DOI: [10.1201/9780429459016](https://doi.org/10.1201/9780429459016).
