@@ -21,7 +21,7 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 ## POINTS AND SUBJECTS
 
 * Motivation to learn data visualization
-* Some real applications
+* Some real applications, if time permits
 * Introducing Structured Data Elements
 * Why use these packages?
 * Grammar and Syntax Review of `ggplot2`
