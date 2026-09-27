@@ -24,6 +24,7 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 * Some real applications
 * Introducing the database structure
 * Why use these packages?
+* Grammar and Syntax Review of `ggplot2`
 * Understanding spatial data
 * Coordinate reference systems and projections
 * Creating and customizing maps
@@ -106,9 +107,10 @@ WICKHAM, Hadley *et al*. Welcome to the tidyverse. **Journal of Open Source Soft
 
 ## APPENDIX
 
-[The R Graph Gallery (Site para ver modelos de possíveis gráficos no R)](https://r-graph-gallery.com/index.html)
+[The R Graph Gallery (a website showcasing examples of graphs that can be created in R)](https://r-graph-gallery.com/index.html)
 
-*Cf.* especificações estéticas do 'ggplot2' em https://ggplot2.tidyverse.org/articles/ggplot2-specs.html e as principais funções e argumentos desse pacote em https://ggplot2.tidyverse.org/reference/
+*Cf.* `ggplot2` aesthetic specifications at https://ggplot2.tidyverse.org/articles/ggplot2-specs.html and the package's main functions and arguments at https://ggplot2.tidyverse.org/reference/
 
-*Cf.* Galeria de expansões válidas registradas compatíveis com o pacote em https://exts.ggplot2.tidyverse.org/gallery/
+*Cf.* the gallery of registered extensions compatible with the package at https://exts.ggplot2.tidyverse.org/gallery/
+
 
