@@ -22,12 +22,13 @@ Mais informações podem ser encontradas em [tidyverse.org](https://tidyverse.or
 
 * Motivation to learn data visualization
 * Some real applications
-* Introducing the database structure
+* Introducing Structured Data Elements
 * Why use these packages?
 * Grammar and Syntax Review of `ggplot2`
+* Spatial Data and Geographic Data Handling
 * Understanding spatial data
-* Coordinate reference systems and projections
-* Creating and customizing maps
+* Brazilian Geographic Data
+* Map Creation and Customization
 
 ### [RECOMMENDED] CORE READINGS
 
