@@ -14,7 +14,9 @@ if (!require(pacman)) {
 
 pacman::p_load(plotly,
                jpeg, 
-               ggplot2)
+               ggplot2,
+               viridis,
+               dichromat)
 
 rm(list = ls())
 cat("\014")
@@ -24,31 +26,58 @@ cat("\014")
 # MONALISA 1
 # ============================================================================
 
-library(jpeg)
-library(plotly)
 
-# 1. Baixar a imagem (versão reduzida, 300 px de largura, para ficar leve)
-download.file(
-  "https://commons.wikimedia.org/wiki/Special:FilePath/Mona_Lisa.jpg?width=300",
-  destfile = "monalisa.jpg", mode = "wb"
-)
+url <- "https://raw.githubusercontent.com/ryallmeida/ppe/refs/heads/main/data/monalisa_matriz.csv"
 
-# 2. Imagem -> matriz de intensidades (0 = preto, 1 = branco)
-img <- readJPEG("monalisa.jpg")
-lum <- 0.2126 * img[,,1] + 0.7152 * img[,,2] + 0.0722 * img[,,3]
+# 1. Ler o CSV direto do GitHub
+dados <- read.csv(url)
 
-dim(lum)          # altura x largura: é a sua "base de dados" numérica
-lum[1:5, 1:5]     # os números que formam a imagem
+# 2. Converter para matriz numérica
+m   <- as.matrix(read.csv(url)); colnames(m) <- NULL   
+# remove os nomes V1, V2, ...
 
-# 3. Salvar como tabela, se quiser guardar os números
-write.csv(lum, "monalisa_matriz.csv", row.names = FALSE)
-
-# 4. Heatmap com plotly (eixo y invertido para a imagem não ficar de cabeça para baixo)
-plot_ly(z = lum, type = "heatmap", colorscale = "Viridis") |>
+# 4. Heatmap
+plot_ly(z = m, 
+        type = "heatmap", 
+        colorscale = "Inferno", 
+        zmin = 0, 
+        zmax = 1) |>
   layout(
-    yaxis = list(autorange = "reversed", scaleanchor = "x", showgrid = FALSE),
+    xaxis = list(visible = FALSE),
+    yaxis = list(visible = FALSE, 
+                 autorange = "reversed", 
+                 scaleanchor = "x")
+  )
+
+# Viridis
+
+plot_ly(z = m, 
+        type = "heatmap", 
+        colorscale = "Viridis") |>
+  layout(
+    yaxis = list(autorange = "reversed", 
+                 scaleanchor = "x", 
+                 showgrid = FALSE),
     xaxis = list(showgrid = FALSE)
   )
+
+# --------------------------------------
+
+paletas <- list(
+  Viridis = viridis(256),
+  Inferno = inferno(256),
+  Magma   = magma(256),
+  Plasma  = plasma(256),
+  Cividis = cividis(256),
+  Turbo   = turbo(256),
+  Cinza   = grey.colors(256, start = 0, end = 1),
+  Jet     = colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
+                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))(256),
+  Rainbow = rainbow(256, end = 0.8)
+)
+
+
+
 
 # ============================================================================
 # MONALISA 2
