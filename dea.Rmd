@@ -1,0 +1,362 @@
+---
+title: "Análise Exploratória de Dados de Partidos e Eleições (2022-2024)"
+author: "Ryan Almeida"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+lang: pt-BR
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    df_print: paged
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = FALSE,
+  message    = FALSE,
+  warning    = FALSE,
+  fig.align  = "center",
+  fig.width  = 14,
+  fig.height = 6,
+  out.width  = "100%",
+  dpi        = 200
+)
+```
+  
+  
+```{r, include=FALSE, warning=FALSE,message=FALSE}
+
+library(tidyverse)
+
+url_dados <- "https://raw.githubusercontent.com/ryallmeida/ppe/refs/heads/main/data/votacao_ideo.csv"
+
+ordem_meso <- c("Metropolitana de Recife", "Mata", "Agreste",
+                "Sertão", "São Francisco")
+
+ordem_espectro <- c("Extrema esquerda", "Esquerda", "Centro-esquerda",
+                    "Centro", "Centro-direita", "Direita", "Extrema direita")
+
+votacao_ideo <- read_csv(
+  url_dados,
+  col_types = cols(
+    CD_MUNICIPIO = col_integer(),
+    code_muni    = col_integer(),
+    NR_TURNO     = col_integer(),
+    .default     = col_guess()
+  ),
+  show_col_types = FALSE
+) |>
+  mutate(
+    mesorregiao = factor(mesorregiao, levels = ordem_meso),
+    espectro    = factor(espectro,    levels = ordem_espectro)
+  )
+
+# Conferências
+stopifnot(!anyNA(votacao_ideo$mesorregiao), !anyNA(votacao_ideo$espectro))
+glimpse(votacao_ideo)
+
+```
+
+
+
+# Distribuição dos votos de vereador e presença de outliers
+
+
+```{r, fig.cap="Figura 1. Município × partido, votos absolutos (escala log)."}
+
+if (!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse, patchwork, scales)
+
+
+escala_espectro <- scale_fill_viridis_d(
+  option = "viridis", end = 0.95, name = "Espectro ideológico"
+)
+ 
+tema_base <- theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x        = element_blank(),
+    axis.ticks.x       = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.position    = "bottom",
+    strip.text         = element_text(face = "bold"),
+    panel.spacing      = unit(1, "lines")
+  )
+ 
+
+cargo_alvo <- "Vereador"
+turno_alvo <- 1
+
+dados_plot2 <- votacao_ideo |>
+  filter(DS_CARGO == cargo_alvo, NR_TURNO == turno_alvo, votos_total > 0) |>
+  droplevels()
+
+subtitulo <- paste0(cargo_alvo, ", ", turno_alvo, "º turno, Pernambuco, 2024. ")
+
+subtitulo <- paste0(cargo_alvo, ", ", turno_alvo, "º turno, Pernambuco, 2024. ")
+
+
+# Diagnóstico: por que ele engana (n pequeno, poucos partidos por caixa)
+diagnostico_errado <- dados_plot2 |>
+  group_by(mesorregiao, espectro) |>
+  summarise(
+    n_obs        = n(),
+    n_partidos   = n_distinct(SG_PARTIDO),
+    n_municipios = n_distinct(CD_MUNICIPIO),
+    mediana      = median(votos_total),
+    iqr          = IQR(votos_total),
+    .groups = "drop"
+  ) |>
+  arrange(n_obs)
+
+print(diagnostico_errado, n = Inf, width = Inf)
+ 
+p_enganoso <- ggplot(dados_plot2,
+                     aes(x = espectro, y = votos_total, fill = espectro)) +
+  geom_boxplot(outlier.alpha = 0.25, outlier.size = 0.7,
+               linewidth = 0.4, width = 0.75) +
+  scale_y_log10(labels = label_number(big.mark = ".", decimal.mark = ",")) +
+  escala_espectro +
+  facet_wrap(~ mesorregiao, nrow = 1) +
+  labs(
+    title    = "",
+    subtitle = paste0(subtitulo, ""),
+    x = NULL,
+    y = "Votos válidos (nominais + legenda, escala log)",
+    caption = "Espectro ideológico: Bolognesi et al. (2025). Mesorregiões: IBGE"
+  ) +
+  tema_base +
+  guides(fill = guide_legend(nrow = 1))
+ 
+p_enganoso
+
+```
+
+
+
+
+
+
+
+```{r,  fig.cap="Figura 2. Município × espectro, % dos votos válidos."}
+
+
+# ============================================================================
+# 5. GRÁFICO B — BOXPLOT MAIS HONESTO (município x espectro, % dos votos)
+# ============================================================================
+ 
+# 5.1 Um ponto por município x espectro; espectro ausente no município = 0%
+dados_esp <- dados_plot2 |>
+  group_by(mesorregiao, CD_MUNICIPIO, espectro) |>
+  summarise(votos = sum(votos_total), .groups = "drop") |>
+  complete(nesting(mesorregiao, CD_MUNICIPIO), espectro,
+           fill = list(votos = 0)) |>
+  group_by(CD_MUNICIPIO) |>
+  mutate(pct_votos = 100 * votos / sum(votos)) |>
+  ungroup() |>
+  arrange(mesorregiao, CD_MUNICIPIO, espectro)
+ 
+# Conferência: todos os municípios com o mesmo número de linhas
+print(dados_esp |> count(CD_MUNICIPIO) |> count(n))
+ 
+# 5.2 Friedman (medidas repetidas: o mesmo município aparece em todas as
+#     caixas) + W de Kendall, por mesorregião
+stats_meso <- dados_esp |>
+  group_split(mesorregiao) |>
+  map_dfr(\(d) {
+    ft <- friedman.test(pct_votos ~ espectro | CD_MUNICIPIO, data = d)
+    n  <- n_distinct(d$CD_MUNICIPIO)
+    k  <- n_distinct(d$espectro)
+    tibble(
+      mesorregiao = as.character(unique(d$mesorregiao)),
+      chi2 = unname(ft$statistic),
+      gl   = unname(ft$parameter),
+      p    = ft$p.value,
+      W    = chi2 / (n * (k - 1)),     # sem correção de empates
+      n    = n
+    )
+  }) |>
+  mutate(
+    p_txt = ifelse(p < 0.001, "p < 0,001",
+                   paste0("p = ", format(round(p, 3), decimal.mark = ","))),
+    rotulo = paste0(
+      "Friedman \u03C7\u00B2(", gl, ") = ",
+      format(round(chi2, 1), decimal.mark = ","), "\n",
+      p_txt, "  |  W = ", format(round(W, 2), decimal.mark = ","), "\n",
+      "n = ", n, " municípios"
+    ),
+    mesorregiao = factor(mesorregiao, levels = levels(dados_esp$mesorregiao))
+  )
+print(stats_meso)
+ 
+# 5.3 Chave horizontal "}" desenhada à mão (sem ggbrace)
+caminho_chave <- function(x1, x2, y, h, n = 30) {
+  xm <- (x1 + x2) / 2
+  d  <- (x2 - x1) * 0.06
+  t  <- seq(0, 1, length.out = n)
+  a  <- t * pi / 2
+ 
+  A <- data.frame(x = x1 + d * (1 - cos(a)),
+                  y = y  + (h / 2) * sin(a))
+  B <- data.frame(x = (xm - d) + d * sin(a),
+                  y = y + h / 2 + (h / 2) * (1 - cos(a)))
+ 
+  esq <- rbind(A, B)
+  dir <- data.frame(x = 2 * xm - rev(esq$x), y = rev(esq$y))
+  rbind(esq, dir)
+}
+ 
+y_chave <- 104   # base da chave (acima do máximo possível, 100%)
+y_texto <- 115   # base do texto (acima do pico da chave)
+n_esp   <- nlevels(dados_esp$espectro)
+ 
+chaves <- stats_meso |>
+  split(~ mesorregiao) |>
+  map_dfr(\(s) {
+    caminho_chave(0.6, n_esp + 0.4, y = y_chave, h = 8) |>
+      mutate(mesorregiao = s$mesorregiao)
+  })
+ 
+textos <- stats_meso |>
+  mutate(x_texto = (n_esp + 1) / 2, y_texto = y_texto)
+ 
+# 5.4 Gráfico
+p_honesto <- ggplot(dados_esp,
+                    aes(x = espectro, y = pct_votos, fill = espectro)) +
+  geom_boxplot(outlier.alpha = 0.25, outlier.size = 0.7,
+               linewidth = 0.4, width = 0.75) +
+  geom_path(data = chaves, aes(x = x, y = y),
+            inherit.aes = FALSE, linewidth = 0.5) +
+  geom_text(data = textos, aes(x = x_texto, y = y_texto, label = rotulo),
+            inherit.aes = FALSE, vjust = 0, size = 3, lineheight = 0.95) +
+  scale_y_continuous(breaks = seq(0, 100, 20),
+                     labels = function(x) paste0(x, "%")) +
+  escala_espectro +
+  facet_wrap(~ mesorregiao, nrow = 1) +
+  coord_cartesian(ylim = c(0, 138), clip = "off") +
+  labs(
+    title    = "",
+    subtitle = paste0(subtitulo, ""),
+    x = NULL,
+    y = paste0("% dos votos válidos do município (", cargo_alvo, ")"),
+    caption = paste0("W = W de Kendall (0 a 1). ",
+                     "Espectro ideológico: Bolognesi et al. (2025). ",
+                     "Mesorregiões: IBGE")
+  ) +
+  tema_base +
+  guides(fill = guide_legend(nrow = 1))
+ 
+p_honesto
+ 
+ 
+
+```
+
+
+```{r valores-testes, include=FALSE}
+num <- function(x, d = 2) format(round(x, d), nsmall = d, decimal.mark = "{,}")
+
+stat_txt <- function(meso) {
+  s <- stats_meso[stats_meso$mesorregiao == meso, ]
+  p <- if (s$p < 0.001) "p < 0{,}001" else paste0("p = ", num(s$p, 3))
+  paste0("$\\chi^2_{\\text{F}}(", s$gl, ") = ", num(s$chi2, 1),
+         "$; $", p, "$; $W = ", num(s$W, 2), "$; $n = ", s$n, "$")
+}
+```
+
+Para cada mesorregião, aplicou-se o teste de Friedman, que compara os
+*postos* da fatia de votos entre os seis campos ideológicos, tratando cada
+município como um bloco (medidas repetidas). A hipótese nula é
+$H_0$: os seis campos têm a mesma distribuição de $\%$ de votos.
+O tamanho de efeito é o $W$ de Kendall, que varia de $0$ a $1$ e mede a
+concordância entre os municípios na ordenação dos campos.
+
+
+1. **Os campos ideológicos não têm a mesma fatia de votos.** Em todas as
+   mesorregiões rejeita-se $H_0$ ($p < 0{,}001$). O padrão visível nos
+   gráficos é que os partidos de extrema esquerda ficam próximos de $0\%$
+   dos votos válidos, enquanto os campos de centro-direita e direita
+   concentram as maiores fatias.
+
+2. **A regularidade desse padrão varia por região.** O $W$ é mais alto na
+   região metropolitana e na Mata e mais baixo no Agreste, no Sertão e em
+   São Francisco. Ou seja, no litoral os municípios ordenam os campos de
+   forma parecida, e no interior a ordem muda mais de município para
+   município. Convém conferir essa descrição com os valores acima.
+
+3. **Comparar o gráfico enganoso com o mais honesto muda a leitura.** Na
+   versão município $\times$ partido, com votos absolutos, o tamanho do
+   município e a mistura de partidos grandes e nanicos dominam a dispersão,
+   e várias caixas repousam sobre $n$ entre $4$ e $12$ observações. Ao
+   usar a fatia de votos do município por campo ideológico, incluindo os
+   zeros, cada caixa passa a ter o mesmo $n$ dentro da região, e a
+   diferença entre os campos aparece sem o efeito do porte.
+
+Limitações
+
+- **Os campos não são independentes.** Em cada município os percentuais
+  somam $100\%$; se um campo sobe, outro necessariamente cai. Isso favorece
+  diferenças "significativas" por construção.
+
+- **O que a variável mede.** É a fatia de votos válidos para vereador em
+  partidos classificados por especialistas, e não a ideologia dos eleitores.
+  O voto para vereador é muito centrado no candidato, então a fatia de um
+  campo não implica adesão programática ao partido.
+
+# Partidos mais votados em Pernambuco (2024)
+
+```{r}
+
+n_top <- 15
+
+niveis_cor <- setdiff(ordem_espectro, "Centro")
+cores_espectro <- setNames(
+  scales::viridis_pal(end = 0.95)(length(niveis_cor)),
+  niveis_cor
+)
+
+votos_partido <- votacao_ideo |>
+  filter(DS_CARGO == "Vereador", NR_TURNO == 1) |>
+  group_by(SG_PARTIDO, espectro) |>
+  summarise(votos = sum(votos_total), .groups = "drop") |>
+  slice_max(votos, n = n_top) |>
+  mutate(
+    SG_PARTIDO = fct_reorder(SG_PARTIDO, votos),
+    rotulo     = scales::label_number(big.mark = ".", decimal.mark = ",")(votos)
+  )
+
+p_pirulito <- ggplot(votos_partido,
+                     aes(x = SG_PARTIDO, y = votos, colour = espectro)) +
+  geom_segment(aes(xend = SG_PARTIDO, yend = 0), linewidth = 0.8) +
+  geom_point(size = 4) +
+  geom_text(aes(label = rotulo), hjust = -0.4, size = 3, colour = "grey20") +
+  coord_flip() +
+  scale_y_continuous(
+    labels = scales::label_number(big.mark = ".", decimal.mark = ","),
+    expand = expansion(mult = c(0, 0.15))
+  ) +
+  scale_colour_manual(
+    values = cores_espectro,
+    breaks = niveis_cor,
+    name   = "Espectro ideológico",
+    drop   = FALSE
+  ) +
+  labs(
+    title    = "",
+    subtitle = "Vereador, 1º turno, 2024. Votos válidos (nominais + legenda)",
+    x = NULL,
+    y = "Votos válidos",
+    caption = "Espectro ideológico: Bolognesi et al. (2025)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    legend.position    = "bottom"
+  ) +
+  guides(colour = guide_legend(nrow = 1))
+
+p_pirulito
+
+```
+
+

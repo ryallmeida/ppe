@@ -1,0 +1,247 @@
+# ============================================================================
+# UNIVERSIDADE FEDERAL DE PERNAMBUCO
+# DEPARTAMENTO DE CIÊNCIA POLÍTICA
+# DISCIPLINA DE PARTIDOS POLÍTICOS E ELEIÇÕES
+# ============================================================================
+
+# OBJETIVO
+#   Ler a votação por partido e zona eleitoral (TSE, 2024, PE), agregar por
+#   município x partido x cargo x turno, e anexar:
+#     - o código IBGE e a mesorregião de cada município;
+#     - a classificação ideológica do partido (Bolognesi et al., 2025).
+#
+# SAÍDA (fim do script)
+#   votacao_ideo  -> tibble na memória e salvo em votacao_ideo.rds
+#                    (o script 2, plot.R, lê esse arquivo)
+#
+#   Colunas de votacao_ideo:
+#     ANO_ELEICAO, SG_UF, SG_UE, NM_UE, CD_MUNICIPIO (código TSE),
+#     code_muni (código IBGE), mesorregiao, DS_CARGO, NR_TURNO,
+#     SG_PARTIDO, ideologia_media, espectro,
+#     votos_legenda, votos_nominais, votos_total
+#
+#   Granularidade: uma linha por município x partido x cargo x turno.
+#   Zeros e filtros de cargo/turno ficam para o script de plot.
+#
+# Testado com R >= 4.1 (usa |>).
+# ============================================================================
+
+rm(list = ls())
+cat("\014")
+
+# ============================================================================
+# 0. CONFIGURAÇÃO
+# ============================================================================
+
+zip_path      <- "C:/Users/ryall/Downloads/votacao_partido_munzona_2024.zip"
+pasta_destino <- "C:/Users/ryall/Downloads/votacao_partido_munzona_2024"
+arquivo_pe    <- "votacao_partido_munzona_2024_PE.csv"
+
+arquivo_saida <- "C:/Users/ryall/Downloads/votacao_ideo.rds"
+
+url_tse_ibge <- paste0(
+  "https://raw.githubusercontent.com/betafcc/",
+  "Municipios-Brasileiros-TSE/master/municipios_brasileiros_tse.csv"
+)
+
+ordem_meso <- c("Metropolitana de Recife", "Mata", "Agreste",
+                "Sertão", "São Francisco")
+
+ordem_espectro <- c("Extrema esquerda", "Esquerda", "Centro-esquerda",
+                    "Centro", "Centro-direita", "Direita", "Extrema direita")
+
+
+# ============================================================================
+# 1. PACOTES
+# ============================================================================
+
+if (!require(pacman)) {
+  install.packages("pacman")
+}
+
+pacman::p_load(tidyverse, 
+               geobr)
+
+# ============================================================================
+# 2. DESCOMPACTAR E LER (LEIAME do TSE: Latin-1, ";", aspas, #NULO/#NE)
+# ============================================================================
+
+stopifnot(file.exists(zip_path))
+dir.create(pasta_destino, showWarnings = FALSE, recursive = TRUE)
+
+conteudo_zip <- unzip(zip_path, list = TRUE)$Name
+if (!arquivo_pe %in% conteudo_zip) {
+  stop("Arquivo não encontrado no ZIP: ", arquivo_pe,
+       "\nConteúdo do ZIP: ", paste(conteudo_zip, collapse = ", "))
+}
+unzip(zip_path, files = arquivo_pe, exdir = pasta_destino, overwrite = TRUE)
+
+colunas_numericas <- c(
+  "ANO_ELEICAO", "CD_TIPO_ELEICAO", "NR_TURNO", "CD_ELEICAO",
+  "NR_ZONA", "CD_CARGO", "NR_PARTIDO", "NR_FEDERACAO", "SQ_COLIGACAO",
+  "QT_VOTOS_LEGENDA_VALIDOS", "QT_VOTOS_NOM_CONVR_LEG_VALIDOS",
+  "QT_TOTAL_VOTOS_LEG_VALIDOS", "QT_VOTOS_NOMINAIS_VALIDOS",
+  "QT_VOTOS_LEGENDA_ANUL_SUBJUD", "QT_VOTOS_NOMINAIS_ANUL_SUBJUD",
+  "QT_VOTOS_LEGENDA_ANULADOS", "QT_VOTOS_NOMINAIS_ANULADOS"
+)
+
+ler_tse <- function(caminho) {
+  message("Lendo: ", basename(caminho))
+  
+  df <- read_delim(
+    caminho,
+    delim     = ";",
+    quote     = "\"",
+    locale    = locale(encoding = "Latin1"),
+    col_types = cols(.default = col_character()),   # tudo texto; converte depois
+    na        = c("", "NA", "#NULO", "#NULO#", "#NE"),
+    trim_ws   = TRUE,
+    progress  = FALSE
+  )
+  
+  # -1 (#NULO) e -3 (#NE) são códigos de ausência nos campos numéricos
+  cols_num <- intersect(names(df), colunas_numericas)
+  df |>
+    mutate(across(all_of(cols_num), ~ suppressWarnings(as.numeric(.x)))) |>
+    mutate(across(all_of(cols_num), ~ if_else(.x %in% c(-1, -3), NA_real_, .x)))
+}
+
+votacao_pe <- ler_tse(file.path(pasta_destino, arquivo_pe))
+glimpse(votacao_pe)
+
+
+# ============================================================================
+# 3. CLASSIFICAÇÃO IDEOLÓGICA (Bolognesi et al., 2025)
+#    Média ponderada 2022 (Tabela 1) e categorias do artigo.
+#    Correspondências de sigla: SDD = SOLIDARIEDADE, CDD = CIDADANIA,
+#    REP = REPUBLICANOS, PMN = MOBILIZA, PROGRE = PP.
+#    PRD (fusão PTB + Patriota em 2023) NÃO consta no artigo: valor é
+#    estimativa própria (média aritmética dos predecessores).
+# ============================================================================
+
+classif_ideologia <- tribble(
+  ~SG_PARTIDO,     ~ideologia_media, ~espectro,
+  "PSTU",           0.525, "Extrema esquerda",
+  "PCO",            0.566, "Extrema esquerda",
+  "PCB",            0.711, "Extrema esquerda",
+  "PSOL",           1.453, "Extrema esquerda",
+  "UP",             1.679, "Esquerda",
+  "PC do B",        1.834, "Esquerda",
+  "PT",             2.761, "Esquerda",
+  "PSB",            3.699, "Centro-esquerda",
+  "REDE",           3.802, "Centro-esquerda",
+  "PDT",            3.977, "Centro-esquerda",
+  "PV",             4.245, "Centro-esquerda",
+  "SOLIDARIEDADE",  6.193, "Centro-direita",
+  "CIDADANIA",      6.358, "Centro-direita",
+  "AVANTE",         6.667, "Centro-direita",
+  "MDB",            6.698, "Centro-direita",
+  "MOBILIZA",       6.945, "Centro-direita",
+  "PSDB",           6.966, "Centro-direita",
+  "PSD",            7.151, "Direita",
+  "PMB",            7.512, "Direita",
+  "PODE",           7.666, "Direita",
+  "PRTB",           7.718, "Direita",
+  "AGIR",           7.780, "Direita",
+  "PP",             8.398, "Direita",
+  "DC",             8.460, "Direita",
+  "REPUBLICANOS",   8.584, "Extrema direita",
+  "UNIÃO",          8.749, "Extrema direita",
+  "NOVO",           8.934, "Extrema direita",
+  "PL",             9.068, "Extrema direita",
+  "PRD",            8.409, "Direita"   # estimativa
+) |>
+  mutate(espectro = factor(espectro, levels = ordem_espectro))
+
+
+# ============================================================================
+# 4. AGREGAR: MUNICÍPIO x PARTIDO x CARGO x TURNO
+#    (o arquivo original tem uma linha por zona eleitoral)
+# ============================================================================
+
+votacao_mun <- votacao_pe |>
+  group_by(ANO_ELEICAO, SG_UF, SG_UE, NM_UE, CD_MUNICIPIO,
+           DS_CARGO, NR_TURNO, SG_PARTIDO) |>
+  summarise(
+    votos_legenda  = sum(QT_VOTOS_LEGENDA_VALIDOS,  na.rm = TRUE),
+    votos_nominais = sum(QT_VOTOS_NOMINAIS_VALIDOS, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    votos_total  = votos_legenda + votos_nominais,
+    CD_MUNICIPIO = as.integer(CD_MUNICIPIO)
+  )
+
+
+# ============================================================================
+# 5. CÓDIGO TSE -> CÓDIGO IBGE -> MESORREGIÃO
+#    O CD_MUNICIPIO do TSE NÃO é o código do IBGE.
+# ============================================================================
+
+tse_ibge <- read_csv(url_tse_ibge, show_col_types = FALSE) |>
+  transmute(
+    CD_MUNICIPIO = as.integer(codigo_tse),
+    code_muni    = as.integer(codigo_ibge)
+  )
+
+meso_pe <- lookup_muni(name_muni = "all") |>
+  filter(abbrev_state == "PE") |>
+  transmute(
+    code_muni   = as.integer(code_muni),
+    mesorregiao = name_meso
+  )
+
+
+# ============================================================================
+# 6. JUNTAR TUDO -> votacao_ideo
+# ============================================================================
+
+votacao_ideo <- votacao_mun |>
+  left_join(tse_ibge,          by = "CD_MUNICIPIO") |>
+  left_join(meso_pe,           by = "code_muni") |>
+  left_join(classif_ideologia, by = "SG_PARTIDO") |>
+  mutate(
+    # tira "Pernambucano/Pernambucana" dos nomes das mesorregiões
+    mesorregiao = str_remove(as.character(mesorregiao), " Pernambucan[oa]$"),
+    mesorregiao = factor(mesorregiao, levels = ordem_meso)
+  ) |>
+  select(ANO_ELEICAO, SG_UF, SG_UE, NM_UE, CD_MUNICIPIO, code_muni,
+         mesorregiao, DS_CARGO, NR_TURNO, SG_PARTIDO,
+         ideologia_media, espectro,
+         votos_legenda, votos_nominais, votos_total)
+
+
+# ============================================================================
+# 7. CONFERÊNCIAS (os três resultados devem ser vazios)
+# ============================================================================
+
+sem_ibge <- votacao_ideo |> filter(is.na(code_muni))   |> distinct(CD_MUNICIPIO, NM_UE)
+sem_meso <- votacao_ideo |> filter(is.na(mesorregiao)) |> distinct(CD_MUNICIPIO, NM_UE)
+sem_ideo <- votacao_ideo |> filter(is.na(espectro))    |> distinct(SG_PARTIDO)
+
+print(sem_ibge); print(sem_meso); print(sem_ideo)
+if (nrow(sem_ibge) + nrow(sem_meso) + nrow(sem_ideo) > 0) {
+  stop("Há municípios/partidos sem correspondência. Veja as tabelas acima.")
+}
+
+count(votacao_ideo, DS_CARGO, NR_TURNO)
+count(votacao_ideo, espectro)
+summary(votacao_ideo)
+
+# ============================================================================
+# 8. SALVAR
+# ============================================================================
+dir.create("data", showWarnings = FALSE)
+
+# CSV para o GitHub (UTF-8, vírgula; NA vira célula vazia)
+write_csv(votacao_ideo, "data/votacao_ideo.csv", na = "")
+
+# Cópia local em .rds (preserva fatores); não precisa ir ao GitHub
+saveRDS(votacao_ideo, "data/votacao_ideo.rds")
+
+message("Salvo: ", nrow(votacao_ideo), " linhas, ", ncol(votacao_ideo), " colunas")
+
+# ============================================================================
+# 0. CONFIGURAÇÃO
+# ============================================================================
+
