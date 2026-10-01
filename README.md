@@ -61,36 +61,87 @@ As análises foram realizadas no R, utilizando o pacote *{tidyverse}* para manip
 
 [BRASIL. Tribunal Superior Eleitoral. Portal de Dados Abertos do TSE: resultados. Brasília, DF, [2026]. Disponível em: https://dadosabertos.tse.jus.br/. Acesso em: 24 set. 2026.](https://dadosabertos.tse.jus.br/dataset/?groups=resultados&_tags_limit=0)
 
-### DOCUMENTATION 
+### DOCUMENTATION
 
-* **Source:** Brazilian Superior Electoral Court (TSE)
-* **Unit of observation:** one row per candidate, per electoral zone, per municipality, per election.
-* **Subset:** first round only; unsuccessful candidates only (`NÃO ELEITO`); 2020, 2022 and 2024 elections.
-* **Missing values:** `-1` = blank in the TSE database; `-3` = not applicable to that election year. Text fields may appear as `NA` or an empty string.
-* **Encoding:** original files in Latin-1, converted to UTF-8 with no data loss.
+This repository holds two processed datasets for the 2024 municipal elections in Pernambuco (PE). Both attach the same ideological classification of parties and the same IBGE geography to TSE data, but they differ in the unit of observation.
 
-| Variable | Type | Description | Values / Notes |
+| File | Unit of observation | TSE source table | Processing script |
 |---|---|---|---|
-| `FONTE` | integer | Source file identifier | Created for this project; not part of the TSE layout |
-| `ANO_ELEICAO` | integer | Election year | `2020`, `2022`, `2024`. By-elections are filed under the preceding regular election year |
-| `NR_TURNO` | integer | Election round | `1` only in this subset |
-| `TP_ABRANGENCIA` | text | Election scope | `M` municipal · `E` state · `F` federal |
-| `SG_UF` | text | State where the election took place | Two-letter state code; `ZZ` = votes cast abroad |
-| `SG_UE` | text | Electoral unit the candidate ran in | `BR` (federal), state code (state) or TSE municipality code (municipal) |
-| `CD_MUNICIPIO` | text | TSE municipality code where votes were cast | 5 digits, leading zeros restored. **Not** the IBGE code; a crosswalk is needed to join with `geobr` |
-| `NR_ZONA` | integer | Electoral zone number | — |
-| `CD_CARGO` | integer | Office code | Pairs with `DS_CARGO` |
-| `DS_CARGO` | text | Office sought | President, Governor, Senator, Federal Deputy, State Deputy, District Deputy, Mayor, City Councilor |
-| `SQ_CANDIDATO` | text | Internal TSE candidate ID | Unique within a single election only; changes across elections |
-| `NM_CANDIDATO` | text | Candidate's full name | Not a unique identifier; the same person may appear in more than one election |
-| `TP_AGREMIACAO` | text | How the candidate ran | `PARTIDO ISOLADO` (single party) · `COLIGAÇÃO` (coalition). No federations in this subset |
-| `SG_PARTIDO` | text | Party abbreviation | — |
-| `NM_PARTIDO` | text | Party name | — |
-| `DS_COMPOSICAO_COLIGACAO` | text | Parties in the coalition | Abbreviations separated by `/` (the TSE documentation incorrectly says `,`). For single-party runs, contains the party abbreviation |
-| `QT_VOTOS_NOMINAIS` | integer | Votes cast for the candidate | **Includes** annulled votes |
-| `NM_TIPO_DESTINACAO_VOTOS` | text | How the votes were counted | `Anulado` = annulled (candidate ineligible) · `Anulado sub judice` = annulled pending appeal |
-| `QT_VOTOS_NOMINAIS_VALIDOS` | integer | Valid votes for the candidate | **Excludes** annulled votes. Differs from `QT_VOTOS_NOMINAIS` in 248 rows (3,712 votes) |
-| `DS_SIT_TOT_TURNO` | text | Candidate's outcome in the round | `NÃO ELEITO` (not elected) only in this subset |
+| `data/votacao_ideo.csv` | one row per **party**, per municipality, per office, per round | *Votação por partido, município e zona* (`votacao_partido_munzona_2024_PE`) | `vereador.R` |
+| `data/prefeitos_eleitos.csv` | one row per **elected mayor** (= one row per municipality) | *Votação por candidato, município e zona* (`votacao_candidato_munzona_2024_PE`) | `prefeitos.R` |
+
+* **Sources:** Brazilian Superior Electoral Court (TSE) for votes; Bolognesi, Codato, Ribeiro and Silva (2025), Harvard Dataverse, doi:10.7910/DVN/MFIXKW, for party ideology; IBGE for municipal codes and mesoregions.
+* **Aggregation:** both TSE tables have one row per electoral zone. In both datasets, zones were **summed** within municipality.
+* **Missing values:** in the TSE source, `-1` = blank in the TSE database and `-3` = not applicable to that election year; both were converted to `NA` before summing and are ignored in the sums (so a sum over only-missing values becomes `0`). `code_muni`, `mesorregiao`, `ideologia_media` and `espectro` have **no** missing values in either file: the processing scripts stop if any municipality or party fails to match.
+* **Encoding:** original TSE files are in Latin-1, read as such and saved as UTF-8 (CSV, comma-separated, `NA` written as an empty cell).
+
+---
+
+#### Dataset 1: `votacao_ideo` (party level)
+
+* **Unit of observation:** one row per party, per municipality, per office, per round.
+* **Subset:** all rows of the TSE party-level file for PE, 2024. No filtering by office or round was applied in processing; `DS_CARGO` and `NR_TURNO` are kept so each analysis can choose its own subset. The vereador plots in this project use `DS_CARGO == "Vereador"` and `NR_TURNO == 1`.
+* **Zero votes:** rows with `votos_total = 0` are kept. The plots remove them only where a logarithmic scale requires it.
+
+#### Dataset 2: `prefeitos_eleitos` (elected mayor level)
+
+* **Unit of observation:** one row per elected mayor.
+* **Subset:** mayor (`Prefeito`) only; elected candidates only (`ELEITO`); 2024; PE only. The mayor comes from the round in which he or she was elected (first round, or second round where there was a runoff). Vice-mayors are excluded. Fernando de Noronha does not elect a mayor, so 184 rows are expected (the script stops if a municipality has more than one elected mayor, and warns if the total is not 184).
+
+---
+
+#### Variable dictionary
+
+The column **In** says which dataset has the variable: **V** = `votacao_ideo`, **P** = `prefeitos_eleitos`.
+
+| Variable | In | Type | Description | Values / Notes |
+|---|---|---|---|---|
+| `ANO_ELEICAO` | V, P | integer | Election year | `2024` only |
+| `SG_UF` | V, P | text | State where the election took place | `PE` only |
+| `SG_UE` | V, P | text | Electoral unit the candidate or party ran in | TSE municipality code (municipal elections) |
+| `NM_UE` | V, P | text | Name of the electoral unit | Municipality name, as in the TSE file |
+| `CD_MUNICIPIO` | V, P | integer | TSE municipality code | **Not** the IBGE code. The crosswalk to IBGE is `code_muni` |
+| `NM_MUNICIPIO` | P | text | Municipality name | As in the TSE file |
+| `code_muni` | V, P | integer | IBGE municipality code | 7 digits. **Created for this project** by joining `CD_MUNICIPIO` to a TSE-IBGE crosswalk (`betafcc/Municipios-Brasileiros-TSE`); not part of the TSE layout. Use it to join with `geobr` |
+| `mesorregiao` | V, P | text | IBGE mesoregion of the municipality | **Created for this project** via `geobr::lookup_muni()`. Values: `Metropolitana de Recife`, `Mata`, `Agreste`, `Sertão`, `São Francisco` (the suffix "Pernambucano/a" was removed). This is the IBGE division used before 2017 |
+| `DS_CARGO` | V | text | Office sought | As in the TSE file (e.g. `Vereador`). Not kept in `prefeitos_eleitos`, where it is always `Prefeito` |
+| `NR_TURNO` | V, P | integer | Election round | In V: the round the votes refer to. In P: the round in which the mayor was elected (`1`, or `2` when there was a runoff) |
+| `SQ_CANDIDATO` | P | text | Internal TSE candidate ID | Unique within a single election only; changes across elections |
+| `NM_URNA_CANDIDATO` | P | text | Candidate's ballot name | Name as it appeared on the ballot; not a unique identifier |
+| `SG_PARTIDO` | V, P | text | Party abbreviation | In V: the party to which the votes were counted. In P: the elected mayor's own party, **not** the coalition. Spelled as in the TSE file (e.g. `PC do B`, `UNIÃO`) |
+| `ideologia_media` | V, P | numeric | Expert-survey ideological position of the party | **Created for this project.** Weighted mean from Bolognesi et al. (2025), Table 1 (2022 wave, weighted by the 2018 position). Scale `0` (extreme left) to `10` (extreme right). Name matches: `MOBILIZA` = PMN, `PP` = Progressistas (PROGRE), `SOLIDARIEDADE` = SDD, `CIDADANIA` = CDD, `REPUBLICANOS` = REP. **`PRD` is not in the article**: its value (8.409) is an estimate, the arithmetic mean of its predecessors PTB (7.955) and Patriota (8.862), the same rule the authors used for mergers |
+| `espectro` | V, P | text | Ideological category of the party | **Created for this project.** Cut-offs from Bolognesi et al. (2025) applied to `ideologia_media`: up to `1.5` = `Extrema esquerda`; `1.51`–`3` = `Esquerda`; `3.01`–`4.49` = `Centro-esquerda`; `4.5`–`5.5` = `Centro`; `5.51`–`7` = `Centro-direita`; `7.01`–`8.5` = `Direita`; above `8.5` = `Extrema direita`. No party falls in `Centro`, so that level is empty. The cut-offs are arbitrary: a party just above one (e.g. `UP`, 1.68) lands in the next category |
+| `votos_legenda` | V | integer | Valid party-label votes | Sum of `QT_VOTOS_LEGENDA_VALIDOS` over all zones. Applies to proportional offices (vereador); not meaningful for mayor, which is a majoritarian election |
+| `votos_nominais` | V | integer | Valid votes for the party's candidates | Sum of `QT_VOTOS_NOMINAIS_VALIDOS` over all zones. **Excludes** annulled votes |
+| `votos_total` | V | integer | Valid votes for the party | `votos_legenda + votos_nominais` |
+| `votos_candidato` | P | integer | Valid votes for the elected mayor | Sum of `QT_VOTOS_NOMINAIS_VALIDOS` over all zones, in the round shown in `NR_TURNO`. **Excludes** annulled votes |
+| `votos_validos_turno` | P | integer | Valid votes in the municipality, in that round | **Created for this project.** Sum of `votos_candidato` over all mayoral candidates of the municipality in the same round. Excludes blank and null votes; it is the denominator of `pct_votos` |
+| `pct_votos` | P | numeric | Elected mayor's share of valid votes | **Created for this project.** `100 * votos_candidato / votos_validos_turno`, from `0` to `100`. Above `50` means an absolute majority |
+
+---
+
+#### Reading the files in R
+
+CSV does not store factors, so the order of `mesorregiao` and `espectro` must be restored on reading:
+
+```r
+ordem_meso <- c("Metropolitana de Recife", "Mata", "Agreste", "Sertão", "São Francisco")
+ordem_espectro <- c("Extrema esquerda", "Esquerda", "Centro-esquerda", "Centro",
+                    "Centro-direita", "Direita", "Extrema direita")
+
+votacao_ideo <- readr::read_csv("data/votacao_ideo.csv", show_col_types = FALSE) |>
+  dplyr::mutate(mesorregiao = base::factor(mesorregiao, levels = ordem_meso),
+                espectro    = base::factor(espectro,    levels = ordem_espectro))
+```
+
+### CAVEATS
+
+* **The ideology is the party's, not the candidate's or the mayor's.** `espectro` classifies the party label, using a 2022 expert survey. In `prefeitos_eleitos` it says nothing about the mayor's own positions, and a small-party mayor may have been elected with support from parties in other camps (coalitions are not in these files).
+* **The classification is dated.** Bolognesi et al. (2025) classify parties as of July 2022, including the party federations of that time. Later changes are not captured.
+* **Party shares are not independent.** Within a municipality, shares of valid votes sum to 100%, so a party or camp gaining share means others lose it.
+* **Vereador votes mix two kinds of vote.** `votos_total` adds party-label and candidate votes; use `votos_legenda` and `votos_nominais` separately if the difference matters.
+* **The elected mayor depends on the TSE's totalization.** The elected candidate is the one whose total situation in the round starts with `ELEITO`, so it can differ from the final outcome in cases decided later by courts.
+
 
 ## REFERENCES
 
