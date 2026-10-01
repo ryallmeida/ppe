@@ -47,6 +47,7 @@ cat("\014")
 # ============================================================================
 
 url_pref    <- "https://raw.githubusercontent.com/ryallmeida/ppe/refs/heads/main/data/prefeitos_eleitos.csv"
+
 pasta_saida <- "C:/Users/ryall/Downloads"
 
 # Ordem lógica das categorias (da esquerda para a direita no espectro)
@@ -164,7 +165,6 @@ base::class(mapa_bruto)
 base::table(sf::st_geometry_type(mapa_bruto))   
 # tipos de geometria presentes
 
-
 # ============================================================================
 # PASSO 5. PREPARAR A MALHA (dplyr::mutate + dplyr::filter)
 #   - as.integer(): o código do IBGE precisa do MESMO tipo nos dois lados da
@@ -172,7 +172,9 @@ base::table(sf::st_geometry_type(mapa_bruto))
 #   - filter() mantém só as linhas em que a condição é VERDADEIRA.
 #   - Fernando de Noronha não elege prefeito: sai do mapa.
 # ============================================================================
+
 base::message("PASSO 5: ajustar tipos e retirar Fernando de Noronha")
+
 
 n_antes <- base::nrow(mapa_bruto)
 
@@ -180,7 +182,10 @@ mapa_pe <- mapa_bruto |>
   dplyr::mutate(code_muni = base::as.integer(code_muni)) |>
   dplyr::filter(!stringr::str_detect(name_muni, "Noronha"))   # ! = NÃO
 
-base::cat("Municípios antes:", n_antes, "| depois:", base::nrow(mapa_pe), "\n")
+base::cat("Municípios antes:", 
+          n_antes, "| depois:", 
+          base::nrow(mapa_pe), "\n")
+
 dplyr::glimpse(mapa_pe)
 
 
@@ -190,15 +195,19 @@ dplyr::glimpse(mapa_pe)
 #   acrescenta as colunas de y (os prefeitos) onde a chave for igual.
 #   Sem correspondência  ->  NA.  Por isso conferimos depois.
 # ============================================================================
+
 base::message("PASSO 6: juntar malha + prefeito eleito")
 
 mapa_pe <- mapa_pe |>
   dplyr::left_join(
-    prefeitos_eleitos |> dplyr::select(code_muni, espectro, SG_PARTIDO),
+    prefeitos_eleitos |> dplyr::select(code_muni, 
+                                       espectro, 
+                                       SG_PARTIDO),
     by = "code_muni"
   )
 
-dplyr::glimpse(mapa_pe)                    # agora com 'espectro' e 'SG_PARTIDO'
+dplyr::glimpse(mapa_pe)                    
+# agora com 'espectro' e 'SG_PARTIDO'
 
 # Conferência: algum município ficou sem prefeito? (deve ser 0 linhas)
 sem_prefeito <- mapa_pe |>
@@ -208,13 +217,6 @@ sem_prefeito <- mapa_pe |>
 
 dplyr::glimpse(sem_prefeito)
 base::stopifnot(base::nrow(sem_prefeito) == 0)
-
-# Distribuição final (o que o mapa vai mostrar)
-mapa_pe |>
-  sf::st_drop_geometry() |>
-  dplyr::count(espectro, .drop = FALSE) |>
-  dplyr::glimpse()
-
 
 # ============================================================================
 # PASSO 7. CONSTRUIR O GRÁFICO POR CAMADAS (ggplot2)
@@ -226,49 +228,72 @@ base::message("PASSO 7: construir o mapa em camadas")
 
 # Ajuste só de tamanho do título dos painéis
 tema_painel <- ggplot2::theme(
-  plot.title = ggplot2::element_text(size = 10, face = "bold")
+  plot.title = ggplot2::element_text(size = 10, 
+                                     face = "bold")
 )
 
 # --- A. Só a geometria ------------------------------------------------------
 # ggplot(data = ...) cria a "tela" e diz de onde vêm os dados.
 # geom_sf() desenha os polígonos da coluna 'geom'.
+# Tema só do título do painel (definido aqui para o bloco rodar sozinho)
+
+
 p_a <- ggplot2::ggplot(data = mapa_pe) +
-  ggplot2::geom_sf() +
-  ggplot2::ggtitle("A. Dados + geom_sf(): só a geometria") +
-  ggplot2::theme(legend.position = "none") +
-  tema_painel
+  ggplot2::geom_sf(fill = "grey80", colour = "grey30", linewidth = 0.2) +
+  ggplot2::labs(title = "A. Dados + geom_sf(): s\u00f3 a geometria") +
+  ggplot2::theme_minimal(base_size = 10) +
+  ggplot2::theme(
+    legend.position = "none",
+    plot.title      = ggplot2::element_text(size = 10, face = "bold")
+  )
+
+base::print(p_a)
+
 
 # --- B. Liga a cor à variável (aes) ----------------------------------------
 # aes(fill = espectro): "pinte cada polígono conforme a coluna 'espectro'".
 # Sem escala definida, o ggplot usa a paleta PADRÃO (nada científica).
+
 p_b <- ggplot2::ggplot(data = mapa_pe) +
   ggplot2::geom_sf(ggplot2::aes(fill = espectro)) +
-  ggplot2::ggtitle("B. + aes(fill = espectro): paleta padrão") +
+  ggplot2::ggtitle("B. + aes(fill = espectro): paleta padrao") +
   ggplot2::theme(legend.position = "none") +
   tema_painel
+
+print(p_b)
 
 # --- C. Escala de cores manual (viridis fixo) -------------------------------
 # scale_fill_manual(values = vetor nomeado) troca a paleta padrão.
 # drop = FALSE mantém todas as categorias na legenda, mesmo as sem polígonos.
+
 p_c <- ggplot2::ggplot(data = mapa_pe) +
   ggplot2::geom_sf(ggplot2::aes(fill = espectro)) +
-  ggplot2::scale_fill_manual(values = cores_espectro, breaks = niveis_cor,
+  ggplot2::scale_fill_manual(values = cores_espectro, 
+                             breaks = niveis_cor,
                              drop = FALSE) +
   ggplot2::ggtitle("C. + scale_fill_manual(): viridis fixo") +
   ggplot2::theme(legend.position = "none") +
   tema_painel
 
+# troca a paleta padrão pelas suas cores: values liga cada categoria à sua cor pelo nome, e breaks define quais categorias aparecem na legenda e em que ordem 
+print(p_c)
+
 # --- D. Bordas finas e brancas ---------------------------------------------
 # Argumentos FORA do aes() valem para todos os polígonos (constantes):
 # colour = cor da borda; linewidth = espessura.
+
 p_d <- ggplot2::ggplot(data = mapa_pe) +
   ggplot2::geom_sf(ggplot2::aes(fill = espectro),
-                   colour = "white", linewidth = 0.15) +
-  ggplot2::scale_fill_manual(values = cores_espectro, breaks = niveis_cor,
+                   colour = "white", 
+                   linewidth = 0.15) +
+  ggplot2::scale_fill_manual(values = cores_espectro, 
+                             breaks = niveis_cor,
                              drop = FALSE) +
   ggplot2::ggtitle("D. + colour e linewidth: bordas") +
   ggplot2::theme(legend.position = "none") +
   tema_painel
+
+print(p_d)
 
 # --- E. Tema sem eixos -----------------------------------------------------
 # Em mapas, latitude/longitude e grade raramente ajudam. theme_void() remove.
@@ -278,9 +303,12 @@ p_e <- p_d +
   ggplot2::theme(legend.position = "none") +
   tema_painel
 
+print(p_e)
+
 # --- F. Legenda embaixo ----------------------------------------------------
 # theme(legend.position = ...) move a legenda;
 # guides(fill = guide_legend(nrow = 2)) organiza os itens em 2 linhas.
+
 p_f <- p_e +
   ggplot2::labs(fill = "Espectro") +
   ggplot2::theme(
@@ -292,9 +320,12 @@ p_f <- p_e +
   ggplot2::ggtitle("F. + legenda: theme() e guides()") +
   tema_painel
 
+print(p_f)
+
 # Inspecionar um gráfico: ele também é um objeto (uma lista)!
 base::class(p_f)
-dplyr::glimpse(p_f$layers[[1]]$aes_params)     # parâmetros constantes da camada 1
+dplyr::glimpse(p_f$layers[[1]]$aes_params)     
+# parâmetros constantes da camada 1
 
 
 # ============================================================================
@@ -306,19 +337,24 @@ base::message("PASSO 8: painel 'anatomia do gráfico'")
 
 figura_anatomia <- patchwork::wrap_plots(
   list(p_a, p_b, p_c, p_d, p_e, p_f),
-  ncol = 3
+  ncol = 2
 ) +
   patchwork::plot_annotation(
-    title    = "Como se constrói o mapa, camada por camada",
-    subtitle = "Cada painel acrescenta um elemento ao anterior (operador +)",
-    caption  = "Espectro: Bolognesi et al. (2025). Malha: IBGE. Prefeitos: TSE (2024)."
+    title    = "",
+    subtitle = "",
+    caption  = ""
   )
 
 figura_anatomia
 
 ggplot2::ggsave(
-  filename = base::file.path(pasta_saida, "figura_anatomia_mapa.png"),
-  plot = figura_anatomia, width = 12, height = 9, dpi = 300, bg = "white"
+  filename = base::file.path(pasta_saida, 
+                             "anatomia_mapa(1).png"),
+  plot = figura_anatomia, 
+  width = 12, 
+  height = 9, 
+  dpi = 300, 
+  bg = "white"
 )
 
 
