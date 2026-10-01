@@ -359,4 +359,130 @@ p_pirulito
 
 ```
 
+# Prefeitos eleitos em 2024 em seu espectro ideológico
+
+
+```{r mapa-interativo-municipios, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width='100%'}
+pacotes <- c("tidyverse", "sf", "geobr", "leaflet", "htmltools")
+faltam  <- setdiff(pacotes, rownames(installed.packages()))
+if (length(faltam) > 0) install.packages(faltam)
+
+library(tidyverse)
+library(sf)
+library(geobr)
+library(leaflet)
+library(htmltools)
+sf::sf_use_s2(FALSE)
+
+# ---- 1. Dados do GitHub ----
+url_pref <- "https://raw.githubusercontent.com/ryallmeida/ppe/refs/heads/main/data/prefeitos_eleitos.csv"
+
+ordem_espectro <- c("Extrema esquerda", "Esquerda", "Centro-esquerda",
+                    "Centro", "Centro-direita", "Direita", "Extrema direita")
+
+prefeitos_eleitos <- read_csv(
+  url_pref,
+  col_types = cols(
+    CD_MUNICIPIO = col_integer(),
+    code_muni    = col_integer(),
+    NR_TURNO     = col_integer(),
+    SQ_CANDIDATO = col_character(),
+    .default     = col_guess()
+  ),
+  locale = locale(encoding = "UTF-8"),
+  show_col_types = FALSE
+) |>
+  mutate(espectro = factor(espectro, levels = ordem_espectro))
+
+stopifnot(nrow(prefeitos_eleitos) > 0, !anyNA(prefeitos_eleitos$espectro))
+
+# ---- 2. Cores fixas (#RRGGBB, sem transparencia: o leaflet exige) ----
+niveis_cor <- setdiff(ordem_espectro, "Centro")
+cores_espectro <- setNames(
+  substr(scales::viridis_pal(end = 0.95)(length(niveis_cor)), 1, 7),
+  niveis_cor
+)
+
+# ---- 3. Malha municipal (sem Fernando de Noronha) + prefeito eleito ----
+mapa_pe <- read_municipality(code_muni = "PE", year = 2022, showProgress = FALSE) |>
+  mutate(code_muni = as.integer(code_muni)) |>
+  filter(!str_detect(name_muni, "Noronha")) |>
+  left_join(
+    prefeitos_eleitos |> select(code_muni, espectro, SG_PARTIDO, NM_URNA_CANDIDATO),
+    by = "code_muni"
+  )
+
+# Para aqui, listando os municipios, se algum ficou sem prefeito
+sem_prefeito <- mapa_pe |> st_drop_geometry() |> filter(is.na(espectro))
+if (nrow(sem_prefeito) > 0) {
+  stop("Municipios sem prefeito classificado: ",
+       paste(sem_prefeito$name_muni, collapse = ", "))
+}
+
+mapa_pe <- mapa_pe |>
+  mutate(
+    cor  = unname(cores_espectro[as.character(espectro)]),
+    dica = paste0("<b>", name_muni, "</b>",
+                  "<br>Partido: ", SG_PARTIDO,
+                  "<br>Prefeito(a): ", str_to_title(NM_URNA_CANDIDATO),
+                  "<br>Espectro: ", as.character(espectro))
+  ) |>
+  st_make_valid() |>
+  st_transform(4326)           # leaflet trabalha em latitude/longitude
+
+stopifnot(!anyNA(mapa_pe$cor), all(nchar(mapa_pe$cor) == 7))
+
+# ---- 4. Mapa interativo ----
+leaflet(mapa_pe, height = 600) |>
+  addProviderTiles(providers$CartoDB.Positron) |>      # apague esta linha para fundo liso
+  addPolygons(
+    fillColor   = ~cor,
+    fillOpacity = 1,
+    color       = "white",
+    weight      = 0.6,
+    label       = ~lapply(dica, htmltools::HTML),      # tooltip ao passar o cursor
+    highlightOptions = highlightOptions(weight = 2, color = "grey15",
+                                        bringToFront = TRUE)
+  ) |>
+  addLegend(
+    position = "bottomright",
+    colors   = unname(cores_espectro),
+    labels   = names(cores_espectro),
+    title    = "Espectro ideol\u00f3gico",
+    opacity  = 1
+  ) |>
+  addControl(
+    htmltools::HTML(paste0(
+      "<b>Espectro ideol\u00f3gico dos prefeitos eleitos em Pernambuco</b>",
+      "<br><small>2024. Passe o cursor sobre o munic\u00edpio</small>"
+    )),
+    position = "topleft"
+  ) |>
+  addControl(
+    htmltools::HTML(paste0(
+      "<small>Espectro: Bolognesi et al. (2025). Malha: IBGE. ",
+      "Fernando de Noronha n\u00e3o entra (sem elei\u00e7\u00e3o).</small>"
+    )),
+    position = "bottomleft"
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
