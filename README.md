@@ -142,6 +142,13 @@ votacao_ideo <- readr::read_csv("data/votacao_ideo.csv", show_col_types = FALSE)
 * **Vereador votes mix two kinds of vote.** `votos_total` adds party-label and candidate votes; use `votos_legenda` and `votos_nominais` separately if the difference matters.
 * **The elected mayor depends on the TSE's totalization.** The elected candidate is the one whose total situation in the round starts with `ELEITO`, so it can differ from the final outcome in cases decided later by courts.
 
+# RESULTS
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ryallmeida/ppe/main/plots/anatomia_mapa%281%29.png" 
+       alt="Anatomia do mapa" 
+       width="900">
+</p>
 
 ## REFERENCES
 
