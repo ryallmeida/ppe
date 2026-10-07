@@ -174,4 +174,6 @@ WICKHAM, Hadley *et al*. Welcome to the tidyverse. **Journal of Open Source Soft
 
 *Cf.* the gallery of registered extensions compatible with the package at https://exts.ggplot2.tidyverse.org/gallery/
 
+*Cf.* O GLOBO. Mapa da votação nos municípios e estados do Brasil — eleições 2022. O Globo, 2022. Disponível em: [https://infograficos.oglobo.globo.com/politica/eleicoes-2022/mapa-votacao-municipios-e-estados-do-brasil.html](https://infograficos.oglobo.globo.com/politica/eleicoes-2022/mapa-votacao-municipios-e-estados-do-brasil.html). Acesso em: 7 out. 2026. [real applications]
+
 
